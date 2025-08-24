@@ -21,11 +21,37 @@ const App: React.FC = () => {
   const [imageForVideo, setImageForVideo] = useState<string | null>(null);
   const [promptForVideo, setPromptForVideo] = useState<{ content: string; isBulk: boolean } | null>(null);
 
+  // Collections
   const [imageCollection, setImageCollection] = useState<string[]>([]);
   const [videoCollection, setVideoCollection] = useState<string[]>([]);
   const [imageToVideoCollection, setImageToVideoCollection] = useState<ImageToVideoResult[]>([]);
   const [generatedPrompts, setGeneratedPrompts] = useState<string[]>([]);
   const MAX_COLLECTION_SIZE = 5;
+  
+  // === Lifted State for Generators ===
+  
+  // Image Generator State
+  const [imageIsLoading, setImageIsLoading] = useState(false);
+  const [imageProgress, setImageProgress] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [latestImage, setLatestImage] = useState<string | null>(null);
+
+  // Video Generator State
+  const [videoIsLoading, setVideoIsLoading] = useState(false);
+  const [videoProgress, setVideoProgress] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [latestVideo, setLatestVideo] = useState<string | null>(null);
+
+  // Image-to-Video Generator State
+  const [i2vIsLoading, setI2VIsLoading] = useState(false);
+  const [i2vProgress, setI2VProgress] = useState<string | null>(null);
+  const [i2vError, setI2VError] = useState<string | null>(null);
+  const [latestI2VResult, setLatestI2VResult] = useState<ImageToVideoResult | null>(null);
+
+  // Prompt Generator State
+  const [promptIsLoading, setPromptIsLoading] = useState(false);
+  const [promptError, setPromptError] = useState<string | null>(null);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -250,6 +276,10 @@ const App: React.FC = () => {
               generatedPrompts={generatedPrompts}
               onPromptsChange={setGeneratedPrompts}
               onSendToVideo={handleSendPromptToVideo}
+              isLoading={promptIsLoading}
+              setIsLoading={setPromptIsLoading}
+              error={promptError}
+              setError={setPromptError}
             />}
             {mode === 'image' && (
               <ImageGenerator 
@@ -257,6 +287,14 @@ const App: React.FC = () => {
                 onSendToVideo={handleSendToVideo}
                 collection={imageCollection}
                 onAddToCollection={handleAddImageToCollection}
+                isLoading={imageIsLoading}
+                setIsLoading={setImageIsLoading}
+                progress={imageProgress}
+                setProgress={setImageProgress}
+                error={imageError}
+                setError={setImageError}
+                result={latestImage}
+                setResult={setLatestImage}
               />
             )}
             {mode === 'video' && (
@@ -268,6 +306,14 @@ const App: React.FC = () => {
                 onClearInitialPrompt={clearPromptForVideo}
                 collection={videoCollection}
                 onAddToCollection={handleAddVideoToCollection}
+                isLoading={videoIsLoading}
+                setIsLoading={setVideoIsLoading}
+                progress={videoProgress}
+                setProgress={setVideoProgress}
+                error={videoError}
+                setError={setVideoError}
+                result={latestVideo}
+                setResult={setLatestVideo}
               />
             )}
             {mode === 'image-to-video' && (
@@ -275,6 +321,14 @@ const App: React.FC = () => {
                 apiKey={apiKey}
                 collection={imageToVideoCollection}
                 onAddToCollection={handleAddImageToVideoToCollection}
+                isLoading={i2vIsLoading}
+                setIsLoading={setI2VIsLoading}
+                progress={i2vProgress}
+                setProgress={setI2VProgress}
+                error={i2vError}
+                setError={setI2VError}
+                result={latestI2VResult}
+                setResult={setLatestI2VResult}
               />
             )}
         </>

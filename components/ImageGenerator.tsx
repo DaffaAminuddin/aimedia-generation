@@ -13,17 +13,35 @@ interface ImageGeneratorProps {
   onSendToVideo: (imageData: string) => void;
   collection: string[];
   onAddToCollection: (url: string) => void;
+  // State lifted to App.tsx
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  progress: string | null;
+  setProgress: (progress: string | null) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+  result: string | null;
+  setResult: (result: string | null) => void;
 }
 
-const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, collection, onAddToCollection }) => {
+const ImageGenerator: React.FC<ImageGeneratorProps> = ({ 
+  apiKey, 
+  onSendToVideo, 
+  collection, 
+  onAddToCollection,
+  isLoading,
+  setIsLoading,
+  progress,
+  setProgress,
+  error,
+  setError,
+  result,
+  setResult,
+}) => {
   const [prompt, setPrompt] = useState<string>('A high-detail, photorealistic image of a majestic lion with a golden mane, staring intently at the camera. The background is a blurry savanna at sunset.');
   const [model, setModel] = useState<ImageModelOption>('imagen-4-fast');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
-  const [generationProgress, setGenerationProgress] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (isLoading || !apiKey) {
@@ -33,8 +51,8 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
 
     setIsLoading(true);
     setError(null);
-    setGeneratedImage(null);
-    setGenerationProgress(null);
+    setResult(null);
+    setProgress(null);
 
     if (isBulkMode) {
       const prompts = prompt.split('\n').filter(p => p.trim() !== '');
@@ -48,17 +66,17 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
         const currentPrompt = prompts[i];
         try {
           const progressText = `Generating ${i + 1}/${prompts.length}`;
-          setGenerationProgress(progressText);
+          setProgress(progressText);
           const imageUrl = await generateImage({ prompt: currentPrompt, model, aspectRatio, apiKey });
           
           const filename = `${sanitizeFilename(currentPrompt)}_${Date.now()}.jpeg`;
           downloadFile(imageUrl, filename);
 
-          setGeneratedImage(imageUrl); // Show the latest one in main display
+          setResult(imageUrl); // Show the latest one in main display
           onAddToCollection(imageUrl); // Add to collection
 
           if (i < prompts.length - 1) {
-            setGenerationProgress(`Waiting...`);
+            setProgress(`Waiting...`);
             await new Promise(resolve => setTimeout(resolve, 2000)); // Short delay between bulk generations
           }
 
@@ -66,7 +84,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
           const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
           setError(`Error on prompt ${i + 1} ("${currentPrompt.substring(0, 20)}..."): ${errorMessage}`);
           setIsLoading(false);
-          setGenerationProgress(null);
+          setProgress(null);
           return; // Stop on error
         }
       }
@@ -77,13 +95,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
             return;
         }
       try {
-        setGenerationProgress(null);
+        setProgress(null);
         const imageUrl = await generateImage({ prompt, model, aspectRatio, apiKey });
         
         const filename = `${sanitizeFilename(prompt)}_${Date.now()}.jpeg`;
         downloadFile(imageUrl, filename);
         
-        setGeneratedImage(imageUrl);
+        setResult(imageUrl);
         onAddToCollection(imageUrl);
       } catch (err)
         {
@@ -92,7 +110,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
     }
 
     setIsLoading(false);
-    setGenerationProgress(null);
+    setProgress(null);
   };
 
   return (
@@ -116,18 +134,18 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
           onGenerate={handleGenerate}
           isLoading={isLoading || !apiKey}
           isBulkMode={isBulkMode}
-          generationProgress={generationProgress}
+          generationProgress={progress}
         />
       </div>
 
       <div className="flex-1 lg:min-w-0 flex flex-col md:flex-row gap-8">
         <div className="flex-1 md:w-2/3">
           <ImageDisplay
-            image={generatedImage}
+            image={result}
             isLoading={isLoading}
             error={error}
             aspectRatio={aspectRatio}
-            generationProgress={generationProgress}
+            generationProgress={progress}
             onSendToVideo={onSendToVideo}
             prompt={prompt}
           />
@@ -136,7 +154,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ apiKey, onSendToVideo, 
            <CollectionPanel 
              collection={collection} 
              mode="image"
-             onSelect={(item) => setGeneratedImage(item as string)}
+             onSelect={(item) => setResult(item as string)}
              className="max-h-[60vh] md:max-h-full"
             />
         </div>

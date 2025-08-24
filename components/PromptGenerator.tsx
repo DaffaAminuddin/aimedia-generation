@@ -9,9 +9,14 @@ interface PromptGeneratorProps {
   generatedPrompts: string[];
   onPromptsChange: (prompts: string[]) => void;
   onSendToVideo: (prompts: string[], isBulk: boolean) => void;
+  // State lifted to App.tsx
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
 }
 
-const PromptResultItem: React.FC<{ prompt: string; index: number, onSendToVideo: (prompt: string) => void; }> = ({ prompt, index, onSendToVideo }) => {
+const PromptResultItem: React.FC<{ prompt: string; index: number, onSendToVideo: (prompt: string) => void; isJson: boolean; }> = ({ prompt, index, onSendToVideo, isJson }) => {
     const [isCopied, setIsCopied] = useState(false);
     const handleCopy = () => {
         navigator.clipboard.writeText(prompt).then(() => {
@@ -27,14 +32,16 @@ const PromptResultItem: React.FC<{ prompt: string; index: number, onSendToVideo:
                     <code>{prompt}</code>
                 </pre>
                 <div className="flex-shrink-0 flex flex-col sm:flex-row items-end sm:items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                        onClick={() => onSendToVideo(prompt)}
-                        className="flex items-center gap-1.5 bg-purple-600/90 hover:bg-purple-700/90 text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
-                        aria-label={`Use prompt for video`}
-                    >
-                        <VideoIcon className="w-4 h-4" />
-                        Use
-                    </button>
+                    {!isJson && (
+                        <button
+                            onClick={() => onSendToVideo(prompt)}
+                            className="flex items-center gap-1.5 bg-purple-600/90 hover:bg-purple-700/90 text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
+                            aria-label={`Use prompt for video`}
+                        >
+                            <VideoIcon className="w-4 h-4" />
+                            Use
+                        </button>
+                    )}
                     <button
                         onClick={handleCopy}
                         className="flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500"
@@ -50,7 +57,16 @@ const PromptResultItem: React.FC<{ prompt: string; index: number, onSendToVideo:
 };
 
 
-const PromptGenerator: React.FC<PromptGeneratorProps> = ({ apiKey, generatedPrompts, onPromptsChange, onSendToVideo }) => {
+const PromptGenerator: React.FC<PromptGeneratorProps> = ({ 
+  apiKey, 
+  generatedPrompts, 
+  onPromptsChange, 
+  onSendToVideo,
+  isLoading,
+  setIsLoading,
+  error,
+  setError,
+}) => {
   const [idea, setIdea] = useState('A cinematic shot of a lone astronaut discovering a glowing, alien flower on a desolate moon.');
   const [selectedStyle, setSelectedStyle] = useState<string>(BASE_STYLE_OPTIONS[0].value);
   const [customStyle, setCustomStyle] = useState<string>('');
@@ -62,8 +78,6 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({ apiKey, generatedProm
   const [numberOfVariations, setNumberOfVariations] = useState<NumberOfVariations>(1);
   const [isMultiIdeaMode, setIsMultiIdeaMode] = useState(false);
   
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
 
   const handleMultiIdeaToggle = () => {
@@ -174,15 +188,17 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({ apiKey, generatedProm
       return (
         <div className="relative w-full h-full p-4 overflow-auto space-y-4">
             <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                <button
-                    onClick={() => onSendToVideo(generatedPrompts, generatedPrompts.length > 1)}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 bg-purple-600/80 hover:bg-purple-700/80 backdrop-blur-sm text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:opacity-50"
-                    aria-label="Use all prompts for video generation"
-                >
-                    <VideoIcon className="w-4 h-4" />
-                    Use All for Video
-                </button>
+                {!isJson && (
+                    <button
+                        onClick={() => onSendToVideo(generatedPrompts, generatedPrompts.length > 1)}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 bg-purple-600/80 hover:bg-purple-700/80 backdrop-blur-sm text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:opacity-50"
+                        aria-label="Use all prompts for video generation"
+                    >
+                        <VideoIcon className="w-4 h-4" />
+                        Use All for Video
+                    </button>
+                )}
                  <button
                     onClick={handleCopyAll}
                     disabled={isLoading}
@@ -208,6 +224,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({ apiKey, generatedProm
                     prompt={prompt} 
                     index={index} 
                     onSendToVideo={(p) => onSendToVideo([p], false)}
+                    isJson={isJson}
                 />
             ))}
             {isLoading && (

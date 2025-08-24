@@ -17,6 +17,15 @@ interface VideoGeneratorProps {
   onClearInitialPrompt: () => void;
   collection: string[];
   onAddToCollection: (url: string) => void;
+  // State lifted to App.tsx
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  progress: string | null;
+  setProgress: (progress: string | null) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+  result: string | null;
+  setResult: (result: string | null) => void;
 }
 
 const VideoGenerator: React.FC<VideoGeneratorProps> = ({ 
@@ -26,15 +35,19 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   initialPrompt,
   onClearInitialPrompt,
   collection, 
-  onAddToCollection 
+  onAddToCollection,
+  isLoading,
+  setIsLoading,
+  progress,
+  setProgress,
+  error,
+  setError,
+  result,
+  setResult,
 }) => {
   const [prompt, setPrompt] = useState<string>('A neon hologram of a cat driving a futuristic car at top speed on a rainy night in Neo-Tokyo');
   const [model, setModel] = useState<VideoModelOption>('veo-3-fast-preview');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
-  const [generationProgress, setGenerationProgress] = useState<string | null>(null);
   const [imageForVideo, setImageForVideo] = useState<string | null>(null);
   const [bulkDelay, setBulkDelay] = useState<string>('40');
 
@@ -62,8 +75,8 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
 
     setIsLoading(true);
     setError(null);
-    setGeneratedVideo(null);
-    setGenerationProgress(null);
+    setResult(null);
+    setProgress(null);
 
     if (isBulkMode) {
       const prompts = prompt.split('\n').filter(p => p.trim() !== '');
@@ -77,25 +90,25 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
         const currentPrompt = prompts[i];
         try {
           const progressText = `Generating ${i + 1}/${prompts.length}`;
-          setGenerationProgress(progressText);
+          setProgress(progressText);
           const videoUrl = await generateVideo({ prompt: currentPrompt, model, image: imageForVideo, apiKey });
           
           const filename = `${sanitizeFilename(currentPrompt)}_${Date.now()}.mp4`;
           downloadFile(videoUrl, filename);
 
-          setGeneratedVideo(videoUrl);
+          setResult(videoUrl);
           onAddToCollection(videoUrl);
           
           if (i < prompts.length - 1) {
             const delaySeconds = parseInt(bulkDelay) || 40;
-            setGenerationProgress(`Waiting ${delaySeconds}s...`);
+            setProgress(`Waiting ${delaySeconds}s...`);
             await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
           }
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
           setError(`Error on prompt ${i + 1} ("${currentPrompt.substring(0, 20)}..."): ${errorMessage}`);
           setIsLoading(false);
-          setGenerationProgress(null);
+          setProgress(null);
           return; // Stop on error
         }
       }
@@ -106,13 +119,13 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
         return;
       }
       try {
-        setGenerationProgress(null);
+        setProgress(null);
         const videoUrl = await generateVideo({ prompt, model, image: imageForVideo, apiKey });
         
         const filename = `${sanitizeFilename(prompt)}_${Date.now()}.mp4`;
         downloadFile(videoUrl, filename);
 
-        setGeneratedVideo(videoUrl);
+        setResult(videoUrl);
         onAddToCollection(videoUrl);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -120,7 +133,7 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
     }
 
     setIsLoading(false);
-    setGenerationProgress(null);
+    setProgress(null);
   };
 
   return (
@@ -149,24 +162,24 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
           onGenerate={handleGenerate}
           isLoading={isLoading || !apiKey}
           isBulkMode={isBulkMode}
-          generationProgress={generationProgress}
+          generationProgress={progress}
         />
       </div>
 
       <div className="flex-1 lg:min-w-0 flex flex-col md:flex-row gap-8">
         <div className="flex-1 md:w-2/3">
           <VideoDisplay
-            video={generatedVideo}
+            video={result}
             isLoading={isLoading}
             error={error}
-            generationProgress={generationProgress}
+            generationProgress={progress}
           />
         </div>
         <div className="md:w-1/3">
            <CollectionPanel 
              collection={collection} 
              mode="video"
-             onSelect={(item) => setGeneratedVideo(item as string)}
+             onSelect={(item) => setResult(item as string)}
              className="max-h-[60vh] md:max-h-full"
             />
         </div>

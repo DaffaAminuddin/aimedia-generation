@@ -183,6 +183,20 @@ const Auth: React.FC = () => {
             {isSignUp ? 'Sign in' : 'Sign up'}
           </button>
         </p>
+
+        <div className="mt-8 text-center text-sm text-gray-400 border-t border-gray-700 pt-6 space-y-3">
+            <div>
+                <p className="font-semibold text-gray-300">Interested in joining?</p>
+                <p>For more information and to get access, please contact us on Telegram.</p>
+            </div>
+            <div className="text-gray-400/80">
+                <p className="font-semibold text-gray-300/80">Tertarik untuk bergabung?</p>
+                <p>Untuk informasi lebih lanjut dan untuk mendapatkan akses, silakan hubungi kami di Telegram.</p>
+            </div>
+            <a href="https://t.me/mesinpintar" target="_blank" rel="noopener noreferrer" className="inline-block font-medium text-purple-400 hover:text-purple-300 focus:outline-none focus:underline pt-2">
+                Contact us: https://t.me/mesinpintar
+            </a>
+        </div>
       </div>
     </div>
   );
