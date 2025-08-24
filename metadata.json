@@ -1,0 +1,5 @@
+{
+  "name": "aistudio-mesinpintar",
+  "description": "An application to generate images and videos from text prompts using Google's Imagen and VEO models. Users can specify a prompt, choose between quality and speed, and select an aspect ratio for images.",
+  "requestFramePermissions": []
+}
