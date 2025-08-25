@@ -32,21 +32,19 @@ jobs:
       - name: Deploy via FTPS to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}     # contoh: ftp.mesinpintar.com (DNS only / abu-abu di Cloudflare)
-          username: ${{ secrets.FTP_USERNAME }} # contoh: mesinpin
+          server: ${{ secrets.FTP_SERVER }}      # sementara: 195.88.211.190 untuk force IPv4
+          username: ${{ secrets.FTP_USERNAME }}  # mesinpin
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}         # 21
-          protocol: ftps                        # explicit FTPS di port 21
-          security: loose                       # ganti ke 'strict' kalau sertifikat host match
-          local-dir: dist/                      # sesuaikan output build (Vite = dist/)
+          port: ${{ secrets.FTP_PORT }}          # 21
+          protocol: ftps
+          security: loose
+          timeout: 180000
+          local-dir: dist/                       # pastikan ini folder hasil build
           server-dir: ${{ secrets.FTP_TARGET_DIR }}  # contoh: /public_html/aistudio.mesinpintar.com/
-          timeout: 120000
           log-level: verbose
           exclude: |
             **/.git*
             **/.github/**
             **/node_modules/**
-          # Catatan: HAPUS baris di bawah ini jika tidak mau wipe
+          # Hapus baris 'cleanup:' (tidak valid). Pakai ini jika memang mau wipe:
           # dangerous-clean-slate: true
-          # Untuk uji koneksi tanpa upload, aktifkan:
-          # dry-run: true
