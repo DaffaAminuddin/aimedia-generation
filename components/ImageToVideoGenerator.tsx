@@ -53,59 +53,77 @@ const ImageToVideoGenerator: React.FC<ImageToVideoGeneratorProps> = ({
     setResult(null);
     setProgress(null);
 
-    const imagePrompts = isBulkMode ? imagePrompt.split('\n').filter(p => p.trim()) : [imagePrompt.trim()].filter(p => p.trim());
-    const videoPrompts = isBulkMode ? videoPrompt.split('\n').filter(p => p.trim()) : [videoPrompt.trim()].filter(p => p.trim());
+    try {
+        if (isBulkMode) {
+            const imagePrompts = imagePrompt.split('\n').filter(p => p.trim());
+            const videoPrompts = videoPrompt.split('\n').filter(p => p.trim());
 
-    if (imagePrompts.length === 0 || videoPrompts.length === 0) {
-      setError("Please enter at least one image and one video prompt.");
-      setIsLoading(false);
-      return;
-    }
-    if (isBulkMode && imagePrompts.length !== videoPrompts.length) {
-      setError("The number of image prompts must match the number of video prompts in bulk mode.");
-      setIsLoading(false);
-      return;
-    }
-    
-    for (let i = 0; i < imagePrompts.length; i++) {
-      const currentImagePrompt = imagePrompts[i];
-      const currentVideoPrompt = videoPrompts[i] || videoPrompts[0];
+            if (imagePrompts.length === 0 || videoPrompts.length === 0) {
+                throw new Error("Please enter at least one image and one video prompt for bulk mode.");
+            }
+            if (imagePrompts.length !== videoPrompts.length) {
+                throw new Error("The number of image prompts must match the number of video prompts in bulk mode.");
+            }
+            
+            for (let i = 0; i < imagePrompts.length; i++) {
+                const currentImagePrompt = imagePrompts[i];
+                const currentVideoPrompt = videoPrompts[i];
+                const progressPrefix = `(${i + 1}/${imagePrompts.length}) `;
 
-      try {
-        const progressPrefix = isBulkMode ? `(${i + 1}/${imagePrompts.length}) ` : '';
-        setProgress(`${progressPrefix}Generating image...`);
-        const imageUrl = await generateImage({ prompt: currentImagePrompt, model: imageModel, aspectRatio, apiKey });
+                try {
+                    setProgress(`${progressPrefix}Generating image...`);
+                    const imageUrl = await generateImage({ prompt: currentImagePrompt, model: imageModel, aspectRatio, apiKey });
 
-        setProgress(`${progressPrefix}Generating video...`);
-        const videoUrl = await generateVideo({ prompt: currentVideoPrompt, model: videoModel, image: imageUrl, apiKey });
-        
-        const imageFilename = `${sanitizeFilename(currentImagePrompt)}_${Date.now()}.jpeg`;
-        downloadFile(imageUrl, imageFilename);
-        const videoFilename = `${sanitizeFilename(currentVideoPrompt)}_${Date.now()}.mp4`;
-        downloadFile(videoUrl, videoFilename);
+                    setProgress(`${progressPrefix}Generating video...`);
+                    const videoUrl = await generateVideo({ prompt: currentVideoPrompt, model: videoModel, image: imageUrl, apiKey });
+                    
+                    const videoFilename = `${sanitizeFilename(currentVideoPrompt)}_${Date.now()}.mp4`;
+                    downloadFile(videoUrl, videoFilename);
 
-        const resultPair = { image: imageUrl, video: videoUrl, imagePrompt: currentImagePrompt, videoPrompt: currentVideoPrompt };
-        
-        setResult(resultPair);
-        onAddToCollection(resultPair);
-        
-        if (i < imagePrompts.length - 1) {
-            const delaySeconds = parseInt(bulkDelay) || 40;
-            setProgress(`Waiting ${delaySeconds}s...`);
-            await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+                    const resultPair = { image: imageUrl, video: videoUrl, imagePrompt: currentImagePrompt, videoPrompt: currentVideoPrompt };
+                    
+                    setResult(resultPair);
+                    onAddToCollection(resultPair);
+                    
+                    if (i < imagePrompts.length - 1) {
+                        const delaySeconds = parseInt(bulkDelay) || 40;
+                        setProgress(`Waiting ${delaySeconds}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+                    }
+                } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+                    throw new Error(`Error on set ${i + 1} ("${currentImagePrompt.substring(0, 20)}..."): ${errorMessage}`);
+                }
+            }
+        } else {
+            // Single generation logic
+            const currentImagePrompt = imagePrompt.trim();
+            const currentVideoPrompt = videoPrompt.trim();
+
+            if (!currentImagePrompt || !currentVideoPrompt) {
+                throw new Error("Please enter both an image and a video prompt.");
+            }
+
+            setProgress(`Generating image...`);
+            const imageUrl = await generateImage({ prompt: currentImagePrompt, model: imageModel, aspectRatio, apiKey });
+
+            setProgress(`Generating video...`);
+            const videoUrl = await generateVideo({ prompt: currentVideoPrompt, model: videoModel, image: imageUrl, apiKey });
+            
+            const videoFilename = `${sanitizeFilename(currentVideoPrompt)}_${Date.now()}.mp4`;
+            downloadFile(videoUrl, videoFilename);
+
+            const resultPair = { image: imageUrl, video: videoUrl, imagePrompt: currentImagePrompt, videoPrompt: currentVideoPrompt };
+            
+            setResult(resultPair);
+            onAddToCollection(resultPair);
         }
-
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`Error on set ${i + 1} ("${currentImagePrompt.substring(0, 20)}..."): ${errorMessage}`);
+    } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+    } finally {
         setIsLoading(false);
         setProgress(null);
-        return;
-      }
     }
-
-    setIsLoading(false);
-    setProgress(null);
   };
 
   const handleDownload = (url: string, prompt: string, extension: 'jpeg' | 'mp4') => {

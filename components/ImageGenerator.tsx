@@ -42,6 +42,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   const [model, setModel] = useState<ImageModelOption>('imagen-4-fast');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
+  const [autoDownload, setAutoDownload] = useState<boolean>(false);
 
   const handleGenerate = async () => {
     if (isLoading || !apiKey) {
@@ -69,8 +70,10 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
           setProgress(progressText);
           const imageUrl = await generateImage({ prompt: currentPrompt, model, aspectRatio, apiKey });
           
-          const filename = `${sanitizeFilename(currentPrompt)}_${Date.now()}.jpeg`;
-          downloadFile(imageUrl, filename);
+          if (autoDownload) {
+            const filename = `${sanitizeFilename(currentPrompt)}_${Date.now()}.jpeg`;
+            downloadFile(imageUrl, filename);
+          }
 
           setResult(imageUrl); // Show the latest one in main display
           onAddToCollection(imageUrl); // Add to collection
@@ -98,8 +101,10 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
         setProgress(null);
         const imageUrl = await generateImage({ prompt, model, aspectRatio, apiKey });
         
-        const filename = `${sanitizeFilename(prompt)}_${Date.now()}.jpeg`;
-        downloadFile(imageUrl, filename);
+        if (autoDownload) {
+          const filename = `${sanitizeFilename(prompt)}_${Date.now()}.jpeg`;
+          downloadFile(imageUrl, filename);
+        }
         
         setResult(imageUrl);
         onAddToCollection(imageUrl);
@@ -150,12 +155,30 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
             prompt={prompt}
           />
         </div>
-        <div className="md:w-1/3">
+        <div className="md:w-1/3 flex flex-col">
+           <div className="flex items-center justify-end mb-4 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                    <label htmlFor="auto-download-toggle" className="text-sm font-medium text-gray-300">Auto-Download Images</label>
+                    <button
+                        id="auto-download-toggle"
+                        onClick={() => setAutoDownload(!autoDownload)}
+                        disabled={isLoading}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed ${autoDownload ? 'bg-purple-600' : 'bg-gray-600'}`}
+                        aria-pressed={autoDownload}
+                    >
+                        <span className="sr-only">Toggle auto-download</span>
+                        <span
+                            aria-hidden="true"
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${autoDownload ? 'translate-x-5' : 'translate-x-0'}`}
+                        />
+                    </button>
+                </div>
+            </div>
            <CollectionPanel 
              collection={collection} 
              mode="image"
              onSelect={(item) => setResult(item as string)}
-             className="max-h-[60vh] md:max-h-full"
+             className="flex-1 min-h-0" // Changed for flexbox behavior
             />
         </div>
       </div>
