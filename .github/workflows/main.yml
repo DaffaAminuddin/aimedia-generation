@@ -2,49 +2,51 @@ name: Deploy to cPanel
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm' # Cache dependencies untuk mempercepat proses build
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build application
         run: npm run build
-        
-      - name: Deploy to FTP server
+
+      - name: Deploy via FTPS to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER }}     # contoh: ftp.mesinpintar.com (DNS only / abu-abu di Cloudflare)
+          username: ${{ secrets.FTP_USERNAME }} # contoh: mesinpin
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}
-          local-dir: ./dist/
-          server-dir: ${{ secrets.FTP_TARGET_DIR }}
-          cleanup: true
+          port: ${{ secrets.FTP_PORT }}         # 21
+          protocol: ftps                        # explicit FTPS di port 21
+          security: loose                       # ganti ke 'strict' kalau sertifikat host match
+          local-dir: dist/                      # sesuaikan output build (Vite = dist/)
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}  # contoh: /public_html/aistudio.mesinpintar.com/
+          timeout: 120000
+          log-level: verbose
           exclude: |
             **/.git*
-            **/.git*/**
+            **/.github/**
             **/node_modules/**
+          # Catatan: HAPUS baris di bawah ini jika tidak mau wipe
+          # dangerous-clean-slate: true
+          # Untuk uji koneksi tanpa upload, aktifkan:
+          # dry-run: true
