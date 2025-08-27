@@ -51,7 +51,7 @@ const App: React.FC = () => {
   // Prompt Generator State
   const [promptIsLoading, setPromptIsLoading] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
-
+  
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -80,6 +80,7 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
 
   const handleSaveKey = () => {
     if (tempApiKey.trim()) {
@@ -149,6 +150,7 @@ const App: React.FC = () => {
     });
   };
 
+
   if (!session) {
     return <Auth />;
   }
@@ -165,17 +167,19 @@ const App: React.FC = () => {
         </header>
 
         <div className="max-w-4xl mx-auto mb-8 space-y-4">
-            <div className="flex items-center justify-between bg-gray-800/50 border border-gray-700 p-3 rounded-lg">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-800/50 border border-gray-700 p-3 rounded-lg">
                 <div className="flex items-center gap-3 overflow-hidden">
                     <img src={`https://ui-avatars.com/api/?name=${session.user.email}&background=1f2937&color=d1d5db&rounded=true`} alt="user avatar" className="w-8 h-8 rounded-full" />
                     <p className="text-sm text-gray-300 truncate">
                         {session.user.email}
                     </p>
                 </div>
-                <button onClick={handleSignOut} className="flex items-center text-sm py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-purple-500">
-                    <SignOutIcon className="w-4 h-4 mr-2" />
-                    Sign Out
-                </button>
+                 <div className="flex items-center gap-4">
+                    <button onClick={handleSignOut} className="flex items-center text-sm py-2 px-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-purple-500">
+                        <SignOutIcon className="w-4 h-4 mr-2" />
+                        Sign Out
+                    </button>
+                </div>
             </div>
             
              <div className="bg-gray-800/50 border border-gray-700 p-4 rounded-lg">

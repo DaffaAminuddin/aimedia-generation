@@ -50,6 +50,8 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
   const [imageForVideo, setImageForVideo] = useState<string | null>(null);
   const [bulkDelay, setBulkDelay] = useState<string>('40');
+  
+  const prompts = prompt.split('\n').filter(p => p.trim() !== '');
 
   useEffect(() => {
     if (initialImage) {
@@ -79,13 +81,11 @@ const VideoGenerator: React.FC<VideoGeneratorProps> = ({
     setProgress(null);
 
     if (isBulkMode) {
-      const prompts = prompt.split('\n').filter(p => p.trim() !== '');
       if (prompts.length === 0) {
         setError("Bulk mode is on, but no prompts were entered. Please enter one prompt per line.");
         setIsLoading(false);
         return;
       }
-
       for (let i = 0; i < prompts.length; i++) {
         const currentPrompt = prompts[i];
         try {

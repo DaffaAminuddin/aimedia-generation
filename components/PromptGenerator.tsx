@@ -165,6 +165,36 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
         setTimeout(() => setIsAllCopied(false), 2000);
     });
   };
+  
+  const minifyJson = (jsonString: string): string => {
+    try {
+      // Parse the JSON string to an object, then stringify it back without formatting.
+      // This is the most reliable way to remove all extra whitespace and newlines.
+      const parsedJson = JSON.parse(jsonString);
+      return JSON.stringify(parsedJson);
+    } catch (e) {
+      console.error("Error minifying JSON prompt:", e);
+      // Fallback for an invalid JSON string: just try to remove newlines.
+      return jsonString.replace(/(\r\n|\n|\r)/gm, "");
+    }
+  };
+
+  const handleUseAllForVideo = () => {
+    if (generatedPrompts.length === 0) return;
+
+    let promptsForVideo: string[];
+
+    if (isJson) {
+        promptsForVideo = generatedPrompts.map(minifyJson).filter(p => p);
+    } else {
+        promptsForVideo = generatedPrompts;
+    }
+
+    if (promptsForVideo.length > 0) {
+        onSendToVideo(promptsForVideo, true);
+    }
+  };
+
 
   const renderResult = () => {
     if (isLoading && generatedPrompts.length === 0) {
@@ -188,17 +218,15 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = ({
       return (
         <div className="relative w-full h-full p-4 overflow-auto space-y-4">
             <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                {!isJson && (
-                    <button
-                        onClick={() => onSendToVideo(generatedPrompts, generatedPrompts.length > 1)}
-                        disabled={isLoading}
-                        className="flex items-center gap-2 bg-purple-600/80 hover:bg-purple-700/80 backdrop-blur-sm text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:opacity-50"
-                        aria-label="Use all prompts for video generation"
-                    >
-                        <VideoIcon className="w-4 h-4" />
-                        Use All for Video
-                    </button>
-                )}
+                <button
+                    onClick={handleUseAllForVideo}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 bg-purple-600/80 hover:bg-purple-700/80 backdrop-blur-sm text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:opacity-50"
+                    aria-label="Use all prompts for video generation"
+                >
+                    <VideoIcon className="w-4 h-4" />
+                    Use All for Video
+                </button>
                  <button
                     onClick={handleCopyAll}
                     disabled={isLoading}

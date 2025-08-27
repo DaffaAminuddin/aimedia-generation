@@ -42,6 +42,9 @@ const ImageToVideoGenerator: React.FC<ImageToVideoGeneratorProps> = ({
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
   const [bulkDelay, setBulkDelay] = useState<string>('40');
 
+  const imagePrompts = imagePrompt.split('\n').filter(p => p.trim());
+  const videoPrompts = videoPrompt.split('\n').filter(p => p.trim());
+
   const handleGenerate = async () => {
     if (isLoading || !apiKey) {
       if (!apiKey) setError("Please set your Gemini API Key in the header before generating.");
@@ -55,16 +58,12 @@ const ImageToVideoGenerator: React.FC<ImageToVideoGeneratorProps> = ({
 
     try {
         if (isBulkMode) {
-            const imagePrompts = imagePrompt.split('\n').filter(p => p.trim());
-            const videoPrompts = videoPrompt.split('\n').filter(p => p.trim());
-
             if (imagePrompts.length === 0 || videoPrompts.length === 0) {
                 throw new Error("Please enter at least one image and one video prompt for bulk mode.");
             }
             if (imagePrompts.length !== videoPrompts.length) {
                 throw new Error("The number of image prompts must match the number of video prompts in bulk mode.");
             }
-            
             for (let i = 0; i < imagePrompts.length; i++) {
                 const currentImagePrompt = imagePrompts[i];
                 const currentVideoPrompt = videoPrompts[i];
@@ -130,7 +129,7 @@ const ImageToVideoGenerator: React.FC<ImageToVideoGeneratorProps> = ({
       const filename = `${sanitizeFilename(prompt)}_${Date.now()}.${extension}`;
       downloadFile(url, filename);
   };
-  
+
   const renderContent = () => {
     if (isLoading) {
       return (

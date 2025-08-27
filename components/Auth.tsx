@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { MagicWandIcon, ErrorIcon, CheckIcon } from './icons';
+import SignUpCodeModal from './SignUpCodeModal';
+import Notification from './Notification';
 
 const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -10,6 +12,9 @@ const Auth: React.FC = () => {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     // Check for a sign-up code in the URL on initial render
@@ -20,6 +25,13 @@ const Auth: React.FC = () => {
       setIsSignUp(true); // Automatically switch to sign-up mode
     }
   }, []);
+  
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+        setNotification(null);
+    }, 5000);
+  };
 
   const handleAuthAction = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -66,8 +78,22 @@ const Auth: React.FC = () => {
     }
   };
 
+  const handleCodePurchased = (purchasedCode: string) => {
+    setCode(purchasedCode);
+    setIsSignUp(true);
+    setIsCodeModalOpen(false);
+    showNotification(`Successfully acquired sign-up code!`, 'success');
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 p-4">
+        <Notification notification={notification} />
+        <SignUpCodeModal 
+            isOpen={isCodeModalOpen}
+            onClose={() => setIsCodeModalOpen(false)}
+            onSuccess={handleCodePurchased}
+            showNotification={showNotification}
+        />
         <header className="text-center mb-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 flex items-center justify-center gap-3">
             <MagicWandIcon className="w-10 h-10" />
@@ -149,6 +175,7 @@ const Auth: React.FC = () => {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   disabled={loading}
+                  placeholder="Enter the code you purchased"
                   className="w-full bg-gray-900/70 text-gray-200 border border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none transition disabled:opacity-50"
                 />
               </div>
@@ -169,34 +196,56 @@ const Auth: React.FC = () => {
           </div>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-400">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-                setSuccessMessage(null);
-            }}
-            disabled={loading}
-            className="font-medium text-purple-400 hover:text-purple-300 focus:outline-none focus:underline disabled:opacity-50"
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </p>
+        {isSignUp ? (
+            <>
+                <div className="mt-6 border-t border-gray-700 pt-6 text-center space-y-3">
+                    <p className="text-sm text-gray-400">
+                        Interested in joining? Get the sign-up code
+                    </p>
+                    <button
+                        onClick={() => setIsCodeModalOpen(true)}
+                        disabled={loading}
+                        className="w-full text-center py-2 px-4 text-sm font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-purple-500 bg-gray-700/50 text-gray-300 hover:bg-gray-700"
+                    >
+                        Get Sign-up Code
+                    </button>
+                </div>
+                <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-400">
+                        Already have an account?{' '}
+                        <button
+                            onClick={() => {
+                                setIsSignUp(false);
+                                setError(null);
+                                setSuccessMessage(null);
+                            }}
+                            disabled={loading}
+                            className="font-medium text-purple-400 hover:text-purple-300 focus:outline-none focus:underline disabled:opacity-50"
+                        >
+                            Sign in
+                        </button>
+                    </p>
+                </div>
+            </>
+        ) : (
+            <div className="mt-6 border-t border-gray-700 pt-6">
+                <p className="text-center text-sm text-gray-400">
+                    Don't have an account?{' '}
+                    <button
+                        onClick={() => {
+                            setIsSignUp(true);
+                            setError(null);
+                            setSuccessMessage(null);
+                        }}
+                        disabled={loading}
+                        className="font-medium text-purple-400 hover:text-purple-300 focus:outline-none focus:underline disabled:opacity-50"
+                    >
+                        Sign up
+                    </button>
+                </p>
+            </div>
+        )}
 
-        <div className="mt-8 text-center text-sm text-gray-400 border-t border-gray-700 pt-6 space-y-3">
-            <div>
-                <p className="font-semibold text-gray-300">Interested in joining?</p>
-                <p>For more information and to get access, please contact us on Telegram.</p>
-            </div>
-            <div className="text-gray-400/80">
-                <p className="font-semibold text-gray-300/80">Tertarik untuk bergabung?</p>
-                <p>Untuk informasi lebih lanjut dan untuk mendapatkan akses, silakan hubungi kami di Telegram.</p>
-            </div>
-            <a href="https://t.me/mesinpintar" target="_blank" rel="noopener noreferrer" className="inline-block font-medium text-purple-400 hover:text-purple-300 focus:outline-none focus:underline pt-2">
-                Contact us: https://t.me/mesinpintar
-            </a>
-        </div>
       </div>
     </div>
   );

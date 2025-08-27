@@ -43,6 +43,8 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [isBulkMode, setIsBulkMode] = useState<boolean>(false);
   const [autoDownload, setAutoDownload] = useState<boolean>(false);
+  
+  const prompts = prompt.split('\n').filter(p => p.trim() !== '');
 
   const handleGenerate = async () => {
     if (isLoading || !apiKey) {
@@ -56,13 +58,11 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({
     setProgress(null);
 
     if (isBulkMode) {
-      const prompts = prompt.split('\n').filter(p => p.trim() !== '');
        if (prompts.length === 0) {
         setError("Bulk mode is on, but no prompts were entered. Please enter one prompt per line.");
         setIsLoading(false);
         return;
       }
-      
       for (let i = 0; i < prompts.length; i++) {
         const currentPrompt = prompts[i];
         try {

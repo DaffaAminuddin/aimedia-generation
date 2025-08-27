@@ -16,7 +16,7 @@ const PromptInput: React.FC<PromptInputProps> = ({
   onGenerate, 
   isLoading,
   isBulkMode,
-  generationProgress
+  generationProgress,
 }) => {
     
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
